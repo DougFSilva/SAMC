@@ -9,10 +9,10 @@
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
 	<groupId>com.douglas</groupId>
-	<artifactId>br.com.SAMA</artifactId>
+	<artifactId>br.com.SAMC</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 	<packaging>war</packaging>
-	<name>br.com.SAMA</name>
+	<name>br.com.SAMC</name>
 	<description>Sistema de controle de acesso</description>
 	<properties>
 		<java.version>11</java.version>

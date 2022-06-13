@@ -1,0 +1,7 @@
+package com.douglas.SAMC.enums;
+
+public enum TipoOcorrencia {
+
+	FALTA, ATRASO, SAIDA_ANTECIPADA, ADVERTENCIA, QUEIXA, ELOGIO, OCORRENCIA, CRACHA, OUTROS, REGISTRO, SUSPENSAO
+
+}
