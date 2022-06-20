@@ -11,7 +11,7 @@
 	<groupId>com.douglas</groupId>
 	<artifactId>br.com.SAMC</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
-	<packaging>war</packaging>
+	<!-- <packaging>war</packaging> -->
 	<name>br.com.SAMC</name>
 	<description>Sistema de controle de acesso</description>
 	<properties>
@@ -42,7 +42,7 @@
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-tomcat</artifactId>
-			<scope>provided</scope>
+			<scope>compile</scope>
 		</dependency>
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
