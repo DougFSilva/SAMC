@@ -114,6 +114,17 @@ public class AlunoService {
 		aluno.setInternetLiberada(alunoFORM.isInternetLiberada());
 		return repository.save(aluno);
 	}
+	
+	public Aluno updateTag(Integer id, Integer tag) {
+		Aluno aluno = findById(id);
+		if(tag == 0) {
+			aluno.setTag(null);
+		}else {
+			aluno.setTag(tag);
+		}
+		return repository.save(aluno);
+	}
+
 
 	public AlunoDTO updateEntradaSaida(Integer id, EntradaSaida entradaSaida) {
 		Aluno aluno = findById(id);

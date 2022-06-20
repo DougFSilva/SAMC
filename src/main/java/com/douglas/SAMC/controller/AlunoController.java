@@ -58,10 +58,17 @@ public class AlunoController {
 
 	}
 
-	@PreAuthorize("hasAnyRole('OPERATOR','ADMIN')")
+	@PreAuthorize("hasAnyRole('ADMIN')")
 	@PutMapping(value = "/{id}")
 	public ResponseEntity<Aluno> update(@PathVariable Integer id, @Valid @RequestBody AlunoFORM alunoFORM) {
 		Aluno aluno = service.update(id, alunoFORM);
+		return ResponseEntity.ok().body(aluno);
+	}
+	
+	@PreAuthorize("hasAnyRole('OPERATOR','ADMIN')")
+	@PutMapping(value = "/tag/{id}/{tag}")
+	public ResponseEntity<Aluno> updateTag(@PathVariable Integer id, @PathVariable Integer tag) {
+		Aluno aluno = service.updateTag(id, tag);
 		return ResponseEntity.ok().body(aluno);
 	}
 
