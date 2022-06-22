@@ -13,6 +13,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import com.amazonaws.services.s3.AmazonS3;
+import com.amazonaws.services.s3.model.S3Object;
+import com.amazonaws.util.IOUtils;
 import com.douglas.SAMC.DTO.TurmaDTO;
 import com.douglas.SAMC.DTO.TurmaFORM;
 import com.douglas.SAMC.model.Aluno;
@@ -35,9 +38,21 @@ public class TurmaService {
 
 	@Autowired
 	private AlunoRepository alunoRepository;
+	
+	@Autowired
+	private AmazonS3 amazonS3;
 
 	@Value("${turmaPhotoLocation}")
 	private String turmaPhotoLocation;
+	
+	@Value("${aws.s3BucketTurmas}")
+	private String awsS3Bucket;
+	
+	@Value("${aws.region}")
+	private String awsRegion;
+	
+	@Value("${file.storage}")
+	private String fileStorage;
 
 	public Turma create(Integer curso_id, TurmaFORM turmaFORM) {
 		if (repository.findByCodigoAndCurso_id(turmaFORM.getCodigo(), curso_id).isPresent()) {
@@ -136,7 +151,11 @@ public class TurmaService {
 
 	public TurmaDTO toDTO(Turma turma) {
 		TurmaDTO turmaDTO = new TurmaDTO(turma);
-		turmaDTO.setImagem(getImageBase64(turma));
+		if(fileStorage.equals("s3")) {
+			turmaDTO.setImagem(getImageS3(turma));
+		}else {
+			turmaDTO.setImagem(getImage(turma));
+		}
 		return turmaDTO;
 	}
 
@@ -144,14 +163,18 @@ public class TurmaService {
 		List<TurmaDTO> turmasDTO = new ArrayList<>();
 		turmas.forEach(turma -> {
 			TurmaDTO turmaDTO = new TurmaDTO(turma);
-			turmaDTO.setImagem(getImageBase64(turma));
+			if(fileStorage.equals("s3")) {
+				turmaDTO.setImagem(getImageS3(turma));
+			}else {
+				turmaDTO.setImagem(getImage(turma));
+			}
 			turmasDTO.add(turmaDTO);
 		});
 		return turmasDTO;
 	}
 
 	@SuppressWarnings("resource")
-	private String getImageBase64(Turma turma) {
+	private String getImage(Turma turma) {
 		String imageName = turma.getId().toString() + '_' + turma.getCodigo() + ".JPG";
 		try {
 			File file = new File(this.turmaPhotoLocation + imageName);
@@ -168,6 +191,26 @@ public class TurmaService {
 		} catch (Exception e) {
 			return null;
 		}
+	}
+	
+	private String getImageS3(Turma turma) {
+		String imageName = turma.getId().toString() + '_' + turma.getCodigo() + ".JPG";
+		try {
+			S3Object object = amazonS3.getObject(this.awsS3Bucket, imageName);
+			try {
+				
+				byte imageData[] = IOUtils.toByteArray(object.getObjectContent());;
+				String imageBase64 = "data:image/jpeg;base64," + Base64.getEncoder().encodeToString(imageData);
+				return imageBase64;
+			} catch (IOException e) {
+				System.out.println(e.getMessage());
+				return null;
+			}
+		} catch (Exception e) {
+			System.out.println(e.getMessage());
+			return null;
+		}
+
 	}
 
 }

@@ -1,7 +1,5 @@
 package com.douglas.SAMC.service;
 
-import java.awt.image.BufferedImage;
-import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -11,13 +9,16 @@ import java.util.Base64;
 import java.util.List;
 import java.util.Optional;
 
-import javax.imageio.ImageIO;
 import javax.validation.Valid;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
+import com.amazonaws.services.s3.AmazonS3;
+import com.amazonaws.services.s3.model.S3Object;
+import com.amazonaws.util.IOUtils;
 import com.douglas.SAMC.DTO.AlunoDTO;
 import com.douglas.SAMC.DTO.AlunoFORM;
 import com.douglas.SAMC.DTO.ImageFORM;
@@ -31,6 +32,7 @@ import com.douglas.SAMC.repository.AlunoRepository;
 import com.douglas.SAMC.service.Exception.DataIntegratyViolationException;
 import com.douglas.SAMC.service.Exception.ObjectNotEmptyException;
 import com.douglas.SAMC.service.Exception.ObjectNotFoundException;
+import com.douglas.SAMC.utils.Base64DecodeToMultiPartFile;
 
 @Service
 public class AlunoService {
@@ -39,13 +41,25 @@ public class AlunoService {
 	private AlunoRepository repository;
 
 	@Autowired
+	private AmazonS3 amazonS3;
+
+	@Autowired
 	private TurmaService turmaService;
+
+	@Autowired
+	private UploadingService uploadingService;
 
 	@Autowired
 	private AlarmService alarmService;
 
 	@Value("${alunoPhotoLocation}")
 	private String alunoPhotoLocation;
+
+	@Value("${aws.s3BucketAlunos}")
+	private String awsS3Bucket;
+	
+	@Value("${file.storage}")
+	private String fileStorage;
 
 	public Aluno create(AlunoFORM alunoFORM) {
 		if (repository.findByMatricula(alunoFORM.getMatricula()).isPresent()) {
@@ -114,17 +128,16 @@ public class AlunoService {
 		aluno.setInternetLiberada(alunoFORM.isInternetLiberada());
 		return repository.save(aluno);
 	}
-	
+
 	public Aluno updateTag(Integer id, Integer tag) {
 		Aluno aluno = findById(id);
-		if(tag == 0) {
+		if (tag == 0) {
 			aluno.setTag(null);
-		}else {
+		} else {
 			aluno.setTag(tag);
 		}
 		return repository.save(aluno);
 	}
-
 
 	public AlunoDTO updateEntradaSaida(Integer id, EntradaSaida entradaSaida) {
 		Aluno aluno = findById(id);
@@ -246,7 +259,12 @@ public class AlunoService {
 			throw new ObjectNotFoundException("Aluno com id" + id + " não encontrado!");
 		}
 		AlunoDTO alunoDTO = new AlunoDTO(aluno.get());
-		alunoDTO.setFoto(this.getImageBase64(aluno.get()));
+		
+		if(fileStorage.equals("s3")) {
+			alunoDTO.setFoto(getImageS3(aluno.get()));
+		}else {
+			alunoDTO.setFoto(getImage(aluno.get()));
+		}
 
 		return alunoDTO;
 	}
@@ -330,7 +348,11 @@ public class AlunoService {
 		List<AlunoDTO> alunosDTO = new ArrayList<>();
 		alunos.forEach(aluno -> {
 			AlunoDTO alunoDTO = new AlunoDTO(aluno);
-			alunoDTO.setFoto(this.getImageBase64(aluno));
+			if(fileStorage.equals("s3")) {
+				alunoDTO.setFoto(getImageS3(aluno));
+			}else {
+				alunoDTO.setFoto(getImage(aluno));
+			}
 			alunosDTO.add(alunoDTO);
 		});
 		return alunosDTO;
@@ -366,7 +388,7 @@ public class AlunoService {
 	}
 
 	@SuppressWarnings("resource")
-	private String getImageBase64(Aluno aluno) {
+	private String getImage(Aluno aluno) {
 		String imageName = aluno.getMatricula().toString() + ".JPG";
 		try {
 			File file = new File(this.alunoPhotoLocation + imageName);
@@ -386,25 +408,41 @@ public class AlunoService {
 
 	}
 
+	private String getImageS3(Aluno aluno) {
+		String imageName = aluno.getMatricula().toString() + ".JPG";
+		try {
+			S3Object object = amazonS3.getObject(this.awsS3Bucket, imageName);
+			try {
+
+				byte imageData[] = IOUtils.toByteArray(object.getObjectContent());
+				String imageBase64 = "data:image/jpeg;base64," + Base64.getEncoder().encodeToString(imageData);
+				return imageBase64;
+			} catch (IOException e) {
+				System.out.println(e.getMessage());
+				return null;
+			}
+		} catch (Exception e) {
+			System.out.println(e.getMessage());
+			return null;
+		}
+
+	}
+
 	public void saveImage(Integer id, ImageFORM imageFORM) {
-		BufferedImage image = null;
 		Aluno aluno = findById(id);
-		String base64Image = imageFORM.getBase64Image().split(",")[1];
-		byte[] imageByte;
 
 		try {
-			imageByte = Base64.getDecoder().decode(base64Image);
-			ByteArrayInputStream bis = new ByteArrayInputStream(imageByte);
-			image = ImageIO.read(bis);
-			bis.close();
-			String imageName = aluno.getMatricula() + ".JPG";
+			MultipartFile file = new Base64DecodeToMultiPartFile(imageFORM.getBase64Image());
+			if(fileStorage.equals("s3")) {
+				uploadingService.uploadFileS3(file, awsS3Bucket , aluno.getMatricula() + ".JPG");
+			}else {
+				uploadingService.uploadFile(file, "Alunos", aluno.getMatricula() + ".JPG");
+			}
 
-			ImageIO.write(image, "png", new File(this.alunoPhotoLocation + imageName));
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-		return;
-
 	}
+
 
 }

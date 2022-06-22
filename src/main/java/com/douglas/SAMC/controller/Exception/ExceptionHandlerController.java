@@ -1,17 +1,19 @@
 package com.douglas.SAMC.controller.Exception;
 
+import java.sql.SQLIntegrityConstraintViolationException;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
-import org.springframework.http.converter.HttpMessageNotReadableException;
-import java.sql.SQLIntegrityConstraintViolationException;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 import com.douglas.SAMC.service.Exception.DataIntegratyViolationException;
 import com.douglas.SAMC.service.Exception.ObjectNotEmptyException;
 import com.douglas.SAMC.service.Exception.ObjectNotFoundException;
 import com.douglas.SAMC.service.Exception.OperationNotAllowedException;
+import com.douglas.SAMC.service.Exception.UploadFailedException;
 import com.douglas.SAMC.service.Exception.WithoutAuthorizationException;
 
 @ControllerAdvice
@@ -73,5 +75,13 @@ public class ExceptionHandlerController {
 				e.getMessage());
 		return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
 	}
+	
+	@ExceptionHandler(UploadFailedException.class)
+	public ResponseEntity<StandartError> UploadFailedException(UploadFailedException e) {
+		StandartError error = new StandartError(System.currentTimeMillis(), HttpStatus.BAD_REQUEST.value(),
+				e.getMessage());
+		return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
+	}
+
 
 }

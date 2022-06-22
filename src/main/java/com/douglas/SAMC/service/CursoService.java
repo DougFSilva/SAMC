@@ -12,6 +12,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import com.amazonaws.services.s3.AmazonS3;
+import com.amazonaws.services.s3.model.S3Object;
+import com.amazonaws.util.IOUtils;
 import com.douglas.SAMC.DTO.CursoDTO;
 import com.douglas.SAMC.enums.Periodo;
 import com.douglas.SAMC.model.Curso;
@@ -28,9 +31,21 @@ public class CursoService {
 
 	@Autowired
 	private TurmaRepository turmaRepository;
+	
+	@Autowired
+	private AmazonS3 amazonS3;
 
 	@Value("${cursoPhotoLocation}")
 	private String cursoPhotoLocation;
+	
+	@Value("${aws.s3BucketCursos}")
+	private String awsS3Bucket;
+	
+	@Value("${aws.region}")
+	private String awsRegion;
+	
+	@Value("${file.storage}")
+	private String fileStorage;
 
 	public Curso create(Curso curso) {
 		Curso newCurso = repository.save(curso);
@@ -95,7 +110,12 @@ public class CursoService {
 
 	private CursoDTO toDTO(Curso curso) {
 		CursoDTO cursoDTO = new CursoDTO(curso);
-		cursoDTO.setImagem(getImageBase64(curso));
+		if(fileStorage.equals("s3")) {
+			cursoDTO.setImagem(getImageS3(curso));
+		}else {
+			cursoDTO.setImagem(getImage(curso));
+		}
+		
 		return cursoDTO;
 	}
 
@@ -103,14 +123,19 @@ public class CursoService {
 		List<CursoDTO> cursosDTO = new ArrayList<>();
 		cursos.forEach(curso -> {
 			CursoDTO cursoDTO = new CursoDTO(curso);
-			cursoDTO.setImagem(getImageBase64(curso));
+			if(fileStorage.equals("s3")) {
+				cursoDTO.setImagem(getImageS3(curso));
+			}else {
+				cursoDTO.setImagem(getImage(curso));
+			}
+			
 			cursosDTO.add(cursoDTO);
 		});
 		return cursosDTO;
 	}
 
 	@SuppressWarnings("resource")
-	private String getImageBase64(Curso curso) {
+	private String getImage(Curso curso) {
 		String imageName = curso.getId().toString() + ".JPG";
 		try {
 			File file = new File(this.cursoPhotoLocation + imageName);
@@ -121,10 +146,31 @@ public class CursoService {
 				fileInputStream.read(imageData);
 				String imageBase64 = "data:image/jpeg;base64," + Base64.getEncoder().encodeToString(imageData);
 				return imageBase64;
-			} catch (IOException e) {
+			} catch (Exception e) {
 				return null;
 			}
 		} catch (Exception e) {
+			return null;
+		}
+
+	}
+	
+	private String getImageS3(Curso curso) {
+		String imageName = curso.getId().toString() + ".JPG";
+		
+		try {
+			S3Object object = amazonS3.getObject(this.awsS3Bucket, imageName);
+			try {
+				
+				byte imageData[] = IOUtils.toByteArray(object.getObjectContent());;
+				String imageBase64 = "data:image/jpeg;base64," + Base64.getEncoder().encodeToString(imageData);
+				return imageBase64;
+			} catch (IOException e) {
+				System.out.println(e.getMessage());
+				return null;
+			}
+		} catch (Exception e) {
+			System.out.println(e.getMessage());
 			return null;
 		}
 
