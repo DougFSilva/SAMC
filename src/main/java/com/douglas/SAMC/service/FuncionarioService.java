@@ -1,7 +1,5 @@
 package com.douglas.SAMC.service;
 
-import java.awt.image.BufferedImage;
-import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -10,12 +8,15 @@ import java.util.Base64;
 import java.util.List;
 import java.util.Optional;
 
-import javax.imageio.ImageIO;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
+import com.amazonaws.services.s3.AmazonS3;
+import com.amazonaws.services.s3.model.S3Object;
+import com.amazonaws.util.IOUtils;
 import com.douglas.SAMC.DTO.FuncionarioDTO;
 import com.douglas.SAMC.DTO.ImageFORM;
 import com.douglas.SAMC.enums.EntradaSaida;
@@ -24,6 +25,7 @@ import com.douglas.SAMC.repository.AlunoRepository;
 import com.douglas.SAMC.repository.FuncionarioRepository;
 import com.douglas.SAMC.service.Exception.DataIntegratyViolationException;
 import com.douglas.SAMC.service.Exception.ObjectNotFoundException;
+import com.douglas.SAMC.utils.Base64DecodeToMultiPartFile;
 
 @Service
 public class FuncionarioService {
@@ -33,9 +35,22 @@ public class FuncionarioService {
 
 	@Autowired
 	AlunoRepository alunoRepository;
+	
+	@Autowired
+	private AmazonS3 amazonS3;
+	
+	@Autowired
+	private UploadingService uploadingService;
+
 
 	@Value("${funcionarioPhotoLocation}")
 	private String funcionarioPhotoLocation;
+	
+	@Value("${aws.s3BucketFuncionarios}")
+	private String awsS3Bucket;
+	
+	@Value("${file.storage}")
+	private String fileStorage;
 
 	public Funcionario create(Funcionario funcionario) {
 		if (repository.findByMatricula(funcionario.getMatricula()).isPresent()) {
@@ -79,7 +94,11 @@ public class FuncionarioService {
 		List<FuncionarioDTO> funcionariosDTO = new ArrayList<>();
 		funcionarios.forEach(funcionario -> {
 			FuncionarioDTO funcionarioDTO = new FuncionarioDTO(funcionario);
-			funcionarioDTO.setFoto(getImageBase64(funcionario));
+			if(fileStorage.equals("s3")) {
+				funcionarioDTO.setFoto(getImageS3(funcionario));
+			}else {
+				funcionarioDTO.setFoto(getImage(funcionario));
+			}
 			funcionariosDTO.add(funcionarioDTO);
 		});
 
@@ -96,7 +115,11 @@ public class FuncionarioService {
 		Optional<Funcionario> funcionario = repository.findById(id);
 		if (funcionario.isPresent()) {
 			FuncionarioDTO funcionarioDTO = new FuncionarioDTO(funcionario.get());
-			funcionarioDTO.setFoto(getImageBase64(funcionario.get()));
+			if(fileStorage.equals("s3")) {
+				funcionarioDTO.setFoto(getImageS3(funcionario.get()));
+			}else {
+				funcionarioDTO.setFoto(getImage(funcionario.get()));
+			}
 			return funcionarioDTO;
 		}
 
@@ -155,7 +178,7 @@ public class FuncionarioService {
 	}
 
 	@SuppressWarnings("resource")
-	private String getImageBase64(Funcionario funcionario) {
+	private String getImage(Funcionario funcionario) {
 		String imageName = funcionario.getMatricula().toString() + ".JPG";
 		try {
 			File file = new File(this.funcionarioPhotoLocation + imageName);
@@ -174,26 +197,42 @@ public class FuncionarioService {
 		}
 
 	}
+	
+	private String getImageS3(Funcionario funcionario) {
+		String imageName = funcionario.getMatricula().toString() + ".JPG";
+		try {
+			S3Object object = amazonS3.getObject(this.awsS3Bucket, imageName);
+			try {
 
+				byte imageData[] = IOUtils.toByteArray(object.getObjectContent());
+				String imageBase64 = "data:image/jpeg;base64," + Base64.getEncoder().encodeToString(imageData);
+				return imageBase64;
+			} catch (IOException e) {
+				System.out.println(e.getMessage());
+				return null;
+			}
+		} catch (Exception e) {
+			System.out.println(e.getMessage());
+			return null;
+		}
+
+	}
+
+	
 	public void saveImage(Integer id, ImageFORM imageFORM) {
-		BufferedImage image = null;
 		Funcionario funcionario = findById(id);
-		String base64Image = imageFORM.getBase64Image().split(",")[1];
-		byte[] imageByte;
 
 		try {
-			imageByte = Base64.getDecoder().decode(base64Image);
-			ByteArrayInputStream bis = new ByteArrayInputStream(imageByte);
-			image = ImageIO.read(bis);
-			bis.close();
-			String imageName = funcionario.getMatricula() + ".JPG";
+			MultipartFile file = new Base64DecodeToMultiPartFile(imageFORM.getBase64Image());
+			if(fileStorage.equals("s3")) {
+				uploadingService.uploadFileS3(file, awsS3Bucket , funcionario.getMatricula() + ".JPG");
+			}else {
+				uploadingService.uploadFile(file, "Funcionarios", funcionario.getMatricula() + ".JPG");
+			}
 
-			ImageIO.write(image, "png", new File(this.funcionarioPhotoLocation + imageName));
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-		return;
-
 	}
 
 }
