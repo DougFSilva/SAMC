@@ -110,13 +110,13 @@ public class AlunoService {
 		aluno.setDataNascimento(alunoFORM.getDataNascimento().toString());
 		aluno.setTag(alunoFORM.getTag());
 		aluno.setMatricula(alunoFORM.getMatricula());
-		if (!alunoFORM.getTurma().equals("FORMANDO") && !alunoFORM.getTurma().equals("EVADIDO")) {
+		if (!alunoFORM.getTurma().equals("EGRESSO") && !alunoFORM.getTurma().equals("EVADIDO")) {
 			Turma turma = turmaService.findByCodigo(alunoFORM.getTurma());
 			aluno.setTurma(turma);
 		}
 		aluno.setNumeroTurma(alunoFORM.getNumeroTurma());
-		if (alunoFORM.getTurma().equals("FORMANDO")) {
-			aluno.setStatus(AlunoStatus.FORMANDO);
+		if (alunoFORM.getTurma().equals("EGRESSO")) {
+			aluno.setStatus(AlunoStatus.EGRESSO);
 		} else if (alunoFORM.getTurma().equals("EVADIDO")) {
 			aluno.setStatus(AlunoStatus.EVADIDO);
 		} else {
@@ -193,8 +193,8 @@ public class AlunoService {
 
 	public Aluno updateStatus(Integer id, AlunoStatus status) {
 		Aluno aluno = findById(id);
-		if (status == AlunoStatus.FORMANDO) {
-			Turma turma = turmaService.findByCodigoAndCursoid("FORMANDO", aluno.getTurma().getCurso().getId());
+		if (status == AlunoStatus.EGRESSO) {
+			Turma turma = turmaService.findByCodigoAndCursoid("EGRESSO", aluno.getTurma().getCurso().getId());
 			aluno.setTurma(turma);
 
 		} else if (status == AlunoStatus.EVADIDO) {
@@ -369,7 +369,7 @@ public class AlunoService {
 
 	public List<Aluno> move(Integer turmaAtual_id, Integer turmaDestino_id) {
 		Turma turma = turmaService.findById(turmaDestino_id);
-		if (turma.getCodigo().equals("FORMANDO")) {
+		if (turma.getCodigo().equals("EGRESSO")) {
 			List<Aluno> alunos = repository.findAllByTurmaIdOrderByNome(turmaAtual_id);
 			alunos.forEach(aluno -> aluno.setTurma(turma));
 			repository.saveAll(alunos);

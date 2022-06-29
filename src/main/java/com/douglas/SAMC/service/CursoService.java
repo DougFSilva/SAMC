@@ -49,9 +49,9 @@ public class CursoService {
 
 	public Curso create(Curso curso) {
 		Curso newCurso = repository.save(curso);
-		Turma formando = new Turma(newCurso, "FORMANDO", null, null, null, null, 0, 0, Periodo.FORMANDO);
+		Turma egresso = new Turma(newCurso, "EGRESSO", null, null, null, null, 0, 0, Periodo.EGRESSO);
 		Turma evadido = new Turma(newCurso, "EVADIDO", null, null, null, null, 0, 0, Periodo.EVADIDO);
-		turmaRepository.save(formando);
+		turmaRepository.save(egresso);
 		turmaRepository.save(evadido);
 		return newCurso;
 	}
