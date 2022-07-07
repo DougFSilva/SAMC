@@ -371,7 +371,10 @@ public class AlunoService {
 		Turma turma = turmaService.findById(turmaDestino_id);
 		if (turma.getCodigo().equals("EGRESSO")) {
 			List<Aluno> alunos = repository.findAllByTurmaIdOrderByNome(turmaAtual_id);
-			alunos.forEach(aluno -> aluno.setTurma(turma));
+			alunos.forEach(aluno -> {
+			aluno.setStatus(AlunoStatus.EGRESSO);
+			aluno.setTurma(turma);
+			});
 			repository.saveAll(alunos);
 			return alunos;
 		}

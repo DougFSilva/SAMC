@@ -69,7 +69,7 @@ public class TurmaService {
 
 	public void delete(Integer id) {
 		Turma turma = findById(id);
-		if (turma.getCodigo().equals("EVADIDO") || turma.getCodigo().equals("FORMANDO")) {
+		if (turma.getCodigo().equals("EVADIDO") || turma.getCodigo().equals("EGRESSO")) {
 			throw new OperationNotAllowedException("Não é permitido deletar essa turma");
 		}
 		List<Aluno> alunos = alunoRepository.findByTurma(turma);
@@ -82,7 +82,7 @@ public class TurmaService {
 
 	public Turma update(Integer id, TurmaFORM turmaFORM) {
 		Turma turma = findById(id);
-		if (turma.getCodigo().equals("EVADIDO") || turma.getCodigo().equals("FORMANDO")) {
+		if (turma.getCodigo().equals("EVADIDO") || turma.getCodigo().equals("EGRESSO")) {
 			throw new OperationNotAllowedException("Não é permitido editar essa turma");
 		}
 		turma.setCodigo(turmaFORM.getCodigo());

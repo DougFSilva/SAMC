@@ -110,7 +110,7 @@ public class TarefasCron {
 		List<Turma> turmasAtivas = new ArrayList<>();
 		List<Turma> turmas = turmaService.findAll();
 		turmas.forEach(turma -> {
-			if (!turma.getCodigo().equals("FORMANDO") && !turma.getCodigo().equals("EVADIDO")) {
+			if (!turma.getCodigo().equals("EGRESSO") && !turma.getCodigo().equals("EVADIDO")) {
 				turmasAtivas.add(turma);
 			}
 		});
