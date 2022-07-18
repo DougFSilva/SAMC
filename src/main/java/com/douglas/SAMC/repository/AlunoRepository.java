@@ -3,7 +3,9 @@ package com.douglas.SAMC.repository;
 import java.util.List;
 import java.util.Optional;
 
-import org.springframework.data.repository.CrudRepository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 import com.douglas.SAMC.enums.AlunoStatus;
@@ -12,7 +14,7 @@ import com.douglas.SAMC.model.Aluno;
 import com.douglas.SAMC.model.Turma;
 
 @Repository
-public interface AlunoRepository extends CrudRepository<Aluno, Integer> {
+public interface AlunoRepository extends JpaRepository<Aluno, Integer> {
 
 	Optional<Aluno> findByMatricula(Integer matricula);
 
@@ -20,7 +22,7 @@ public interface AlunoRepository extends CrudRepository<Aluno, Integer> {
 
 	List<Aluno> findAllByNomeContaining(String nome);
 
-	List<Aluno> findAllByTurmaOrderByNome(Turma turma);
+	List<Aluno> findAllByTurmaOrderByNome(Turma turma, Pageable paginacao);
 
 	List<Aluno> findAllByEntradaSaidaOrderByNome(EntradaSaida entradaSaida);
 
@@ -28,16 +30,18 @@ public interface AlunoRepository extends CrudRepository<Aluno, Integer> {
 
 	List<Aluno> findAllByDesbloqueioTemporarioOrderByNome(boolean resolvido);
 
-	List<Aluno> findAllByStatusOrderByNome(AlunoStatus alunoStatus);
+	List<Aluno> findAllByStatusOrderByNome(AlunoStatus alunoStatus, Pageable paginacao);
 
 	List<Aluno> findByTurmaAndStatusOrderByNome(Turma turma, AlunoStatus status);
 
-	List<Aluno> findAllByTurmaCursoIdOrderByNome(Integer idCurso);
+	List<Aluno> findAllByTurmaCursoIdOrderByNome(Integer idCurso, Pageable paginacao);
 
 	List<Aluno> findAllByTurmaCursoIdAndStatusOrderByNome(Integer idCurso, AlunoStatus status);
 
 	List<Aluno> findByTurma(Turma turma);
 
 	List<Aluno> findAllByTurmaIdOrderByNome(Integer idTurmaAtual);
+	
+	Page<Aluno> findAll(Pageable paginacao);
 
 }

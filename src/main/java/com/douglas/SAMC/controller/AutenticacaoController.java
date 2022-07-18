@@ -34,10 +34,10 @@ public class AutenticacaoController {
 	public ResponseEntity<?> autenticar(@RequestBody @Valid LoginFORM loginFORM) {
 		UsernamePasswordAuthenticationToken dadosLogin = loginFORM.convert();
 		try {
-			Authentication authentication = authenticationManager.authenticate(dadosLogin);
-			Usuario usuario = (Usuario) authentication.getPrincipal();
-			String token = tokenService.gerarToken(authentication);
-			TokenDTO tokenDTO = new TokenDTO(token, "Bearer ", usuario.getNome(), usuario.getPerfis());
+			Authentication authentication = authenticationManager.authenticate(dadosLogin); // Tenta fazer a autenticação
+			Usuario usuario = (Usuario) authentication.getPrincipal(); // Busca o usuário
+			String token = tokenService.gerarToken(authentication); // Gera o token
+			TokenDTO tokenDTO = new TokenDTO(token, "Bearer ", usuario.getNome(), usuario.getPerfis()); // Devolve o token
 			return ResponseEntity.ok(tokenDTO);
 
 		} catch (AuthenticationException e) {

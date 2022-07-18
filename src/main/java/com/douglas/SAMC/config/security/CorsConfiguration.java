@@ -10,6 +10,8 @@ public class CorsConfiguration implements WebMvcConfigurer {
 	@Override
 	public void addCorsMappings(CorsRegistry registry) {
 		registry.addMapping("/**").allowedOrigins("*").allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS", "HEAD",
-				"TRACE", "CONNECT");
+				"TRACE", "CONNECT"); // Editar para permitir acesso somente pelo frontend desejado 
+		
+		registry.addMapping("/acesso/*").allowedOrigins("*").allowedMethods("GET"); // liberado acesso de qualquer local
 	}
 }

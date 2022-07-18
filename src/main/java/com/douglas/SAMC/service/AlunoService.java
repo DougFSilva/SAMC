@@ -13,6 +13,8 @@ import javax.validation.Valid;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -243,9 +245,9 @@ public class AlunoService {
 
 	}
 
-	public List<AlunoDTO> findAll() {
-		List<Aluno> alunos = (List<Aluno>) repository.findAll();
-		return toDTO(alunos);
+	public List<AlunoDTO> findAll(Pageable paginacao) {
+		Page<Aluno> alunos = (Page<Aluno>) repository.findAll(paginacao);
+		return toDTO(alunos.toList());
 	}
 
 	public Aluno findById(Integer id) {
@@ -288,14 +290,14 @@ public class AlunoService {
 		return (List<Aluno>) repository.findAllByNomeContaining(nome);
 	}
 
-	public List<Aluno> findByTurma(String codigo) {
+	public List<Aluno> findByTurma(String codigo, Pageable paginacao) {
 		Turma turma = turmaService.findByCodigo(codigo);
-		return (List<Aluno>) repository.findAllByTurmaOrderByNome(turma);
+		return (List<Aluno>) repository.findAllByTurmaOrderByNome(turma, paginacao);
 	}
 
-	public List<AlunoDTO> findByTurmaDTO(@Valid Integer id) {
+	public List<AlunoDTO> findByTurmaDTO(@Valid Integer id, Pageable paginacao) {
 		Turma turma = turmaService.findById(id);
-		List<Aluno> alunos = repository.findAllByTurmaOrderByNome(turma);
+		List<Aluno> alunos = repository.findAllByTurmaOrderByNome(turma, paginacao);
 		return toDTO(alunos);
 	}
 
@@ -305,13 +307,13 @@ public class AlunoService {
 		return toDTO(alunos);
 	}
 
-	public List<AlunoDTO> findAllByStatus(AlunoStatus status) {
-		List<Aluno> alunos = repository.findAllByStatusOrderByNome(status);
+	public List<AlunoDTO> findAllByStatus(AlunoStatus status, Pageable paginacao) {
+		List<Aluno> alunos = repository.findAllByStatusOrderByNome(status, paginacao);
 		return toDTO(alunos);
 	}
 
-	public List<AlunoDTO> findAllByStatusLazy(AlunoStatus status) {
-		List<Aluno> alunos = repository.findAllByStatusOrderByNome(status);
+	public List<AlunoDTO> findAllByStatusLazy(AlunoStatus status, Pageable paginacao) {
+		List<Aluno> alunos = repository.findAllByStatusOrderByNome(status, paginacao);
 		return toDTOLAzy(alunos);
 	}
 
@@ -323,8 +325,8 @@ public class AlunoService {
 		return (List<Aluno>) repository.findAllByEntradaSaidaOrderByNome(entradaSaida);
 	}
 
-	public List<AlunoDTO> findByCurso(Integer curso_id) {
-		List<Aluno> alunos = repository.findAllByTurmaCursoIdOrderByNome(curso_id);
+	public List<AlunoDTO> findByCurso(Integer curso_id, Pageable paginacao) {
+		List<Aluno> alunos = repository.findAllByTurmaCursoIdOrderByNome(curso_id, paginacao);
 		return toDTO(alunos);
 	}
 
@@ -367,7 +369,7 @@ public class AlunoService {
 		return alunosDTO;
 	}
 
-	public List<Aluno> move(Integer turmaAtual_id, Integer turmaDestino_id) {
+	public List<Aluno> move(Integer turmaAtual_id, Integer turmaDestino_id, Pageable paginacao) {
 		Turma turma = turmaService.findById(turmaDestino_id);
 		if (turma.getCodigo().equals("EGRESSO")) {
 			List<Aluno> alunos = repository.findAllByTurmaIdOrderByNome(turmaAtual_id);
@@ -378,7 +380,7 @@ public class AlunoService {
 			repository.saveAll(alunos);
 			return alunos;
 		}
-		List<Aluno> alunosTurmaDestino = repository.findAllByTurmaOrderByNome(turma);
+		List<Aluno> alunosTurmaDestino = repository.findAllByTurmaOrderByNome(turma, paginacao);
 		if (alunosTurmaDestino.size() > 0) {
 			throw new ObjectNotEmptyException("A turma " + turma.getCodigo() + " contém alunos!");
 		}
@@ -389,27 +391,26 @@ public class AlunoService {
 		repository.saveAll(alunos);
 		return alunos;
 	}
-
-	@SuppressWarnings("resource")
+	
 	private String getImage(Aluno aluno) {
-		String imageName = aluno.getMatricula().toString() + ".JPG";
+	String imageName = aluno.getMatricula().toString() + ".JPG";
+	
+	try {
+		File file = new File(this.alunoPhotoLocation + imageName);
 		try {
-			File file = new File(this.alunoPhotoLocation + imageName);
-			FileInputStream fileInputStream;
-			try {
-				fileInputStream = new FileInputStream(file);
-				byte imageData[] = new byte[(int) file.length()];
-				fileInputStream.read(imageData);
-				String imageBase64 = "data:image/jpeg;base64," + Base64.getEncoder().encodeToString(imageData);
-				return imageBase64;
-			} catch (IOException e) {
-				return null;
-			}
-		} catch (Exception e) {
+			FileInputStream fileInputStream = new FileInputStream(file);
+			byte imageData[] = new byte[(int) file.length()];
+			fileInputStream.read(imageData);
+			String imageBase64 = "data:image/jpeg;base64," + Base64.getEncoder().encodeToString(imageData);
+			fileInputStream.close();
+			return imageBase64;
+		} catch (IOException e) {
 			return null;
 		}
-
+	} catch (Exception e) {
+		return null;
 	}
+}
 
 	private String getImageS3(Aluno aluno) {
 		String imageName = aluno.getMatricula().toString() + ".JPG";

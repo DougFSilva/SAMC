@@ -6,6 +6,11 @@ import java.util.List;
 import javax.validation.Valid;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort.Direction;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -32,6 +37,7 @@ public class FuncionarioController {
 
 	@PreAuthorize("hasRole('ADMIN')")
 	@PostMapping(value = "/create")
+	@CacheEvict(value = {"funcionarioFindAll"}, allEntries = true )
 	public ResponseEntity<Funcionario> create(@Valid @RequestBody Funcionario funcionario) {
 		Funcionario newFuncionario = service.create(funcionario);
 		URI uri = ServletUriComponentsBuilder.fromCurrentRequest().path("/{id}").buildAndExpand(newFuncionario.getId())
@@ -41,6 +47,7 @@ public class FuncionarioController {
 
 	@PreAuthorize("hasRole('ADMIN')")
 	@DeleteMapping(value = "/{id}")
+	@CacheEvict(value = {"funcionarioFindAll"}, allEntries = true )
 	public ResponseEntity<Void> delete(@PathVariable Integer id) {
 		service.delete(id);
 		return ResponseEntity.noContent().build();
@@ -48,6 +55,7 @@ public class FuncionarioController {
 
 	@PreAuthorize("hasRole('ADMIN')")
 	@PutMapping(value = "/{id}")
+	@CacheEvict(value = {"funcionarioFindAll"}, allEntries = true )
 	public ResponseEntity<Funcionario> update(@PathVariable Integer id, @Valid @RequestBody Funcionario funcionario) {
 		Funcionario newFuncionario = service.update(id, funcionario);
 		return ResponseEntity.ok().body(newFuncionario);
@@ -55,8 +63,9 @@ public class FuncionarioController {
 
 	@PreAuthorize("isAuthenticated()")
 	@GetMapping
-	public ResponseEntity<List<FuncionarioDTO>> findAll() {
-		List<FuncionarioDTO> funcionariosDTO = service.FindAll();
+	@Cacheable(value = "funcionarioFindAll")
+	public ResponseEntity<List<FuncionarioDTO>> findAll(@PageableDefault(sort = "nome", direction = Direction.ASC) Pageable paginacao) {
+		List<FuncionarioDTO> funcionariosDTO = service.FindAll(paginacao);
 		return ResponseEntity.ok().body(funcionariosDTO);
 	}
 
@@ -69,14 +78,6 @@ public class FuncionarioController {
 	}
 
 	@PreAuthorize("isAuthenticated()")
-	@GetMapping(value = "/nome/{nome}")
-	public ResponseEntity<List<Funcionario>> findByNomeContaining(@PathVariable String nome) {
-		List<Funcionario> funcionarios = service.findAllByNomeContaining(nome);
-		return ResponseEntity.ok().body(funcionarios);
-
-	}
-
-	@PreAuthorize("isAuthenticated()")
 	@GetMapping(value = "/tag/{tag}")
 	public ResponseEntity<Funcionario> findByTag(@PathVariable Integer tag) {
 		Funcionario funcionario = service.findByTag(tag);
@@ -85,6 +86,7 @@ public class FuncionarioController {
 
 	@PreAuthorize("hasAnyRole('OPERATOR','ADMIN')")
 	@PostMapping(value = "/saveImage/{id}")
+	@CacheEvict(value = {"funcionarioFindAll"}, allEntries = true )
 	public ResponseEntity<Void> saveImage(@PathVariable Integer id, @RequestBody ImageFORM imageFORM) {
 		service.saveImage(id, imageFORM);
 		return ResponseEntity.ok().build();

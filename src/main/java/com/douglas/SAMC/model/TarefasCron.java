@@ -6,6 +6,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
@@ -68,8 +70,9 @@ public class TarefasCron {
 		});
 	}
 
-	@Scheduled(cron = "30 59 23 * * *")
+	@Scheduled(cron = "0 50 8 * * *")
 	public void updateFaltas() {
+		Pageable paginacao = PageRequest.of(0, 100000);
 		List<Aluno> alunosEmAula = new ArrayList<>();
 		List<Aluno> alunosPresentes = new ArrayList<>();
 
@@ -82,7 +85,7 @@ public class TarefasCron {
 		List<Turma> turmas = turmaService.findAllByAulasDiaAula(localDateTime.toLocalDate());
 
 		turmas.forEach(turma -> {
-			List<Aluno> alunos = alunoService.findByTurma(turma.getCodigo());
+			List<Aluno> alunos = alunoService.findByTurma(turma.getCodigo(), paginacao);
 			alunosEmAula.addAll(alunos);
 		});
 
@@ -105,8 +108,9 @@ public class TarefasCron {
 
 	}
 
-	@Scheduled(cron = "45 59 23 * * *")
+	@Scheduled(cron = "0 51 8 * * *")
 	public void alarmFaltas() {
+		Pageable paginacao = PageRequest.of(0, 100000);
 		List<Turma> turmasAtivas = new ArrayList<>();
 		List<Turma> turmas = turmaService.findAll();
 		turmas.forEach(turma -> {
@@ -115,7 +119,7 @@ public class TarefasCron {
 			}
 		});
 		turmasAtivas.forEach(turma -> {
-			List<Aluno> alunos = alunoService.findByTurma(turma.getCodigo());
+			List<Aluno> alunos = alunoService.findByTurma(turma.getCodigo(), paginacao);
 			if (alunos.size() > 0) {
 				this.aulas = (float) turma.getAulas().size();
 				alunos.forEach(aluno -> {

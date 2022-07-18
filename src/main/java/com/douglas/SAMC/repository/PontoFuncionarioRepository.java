@@ -2,11 +2,11 @@ package com.douglas.SAMC.repository;
 
 import java.util.List;
 
-import org.springframework.data.repository.CrudRepository;
+import org.springframework.data.jpa.repository.JpaRepository;
 
 import com.douglas.SAMC.model.PontoFuncionario;
 
-public interface PontoFuncionarioRepository extends CrudRepository<PontoFuncionario, Integer> {
+public interface PontoFuncionarioRepository extends JpaRepository<PontoFuncionario, Integer> {
 
 	List<PontoFuncionario> findByFuncionarioId(Integer id);
 

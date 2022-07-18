@@ -18,8 +18,8 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 import com.douglas.SAMC.repository.UsuarioRepository;
 
 @SuppressWarnings("deprecation")
-@EnableWebSecurity
 @Configuration
+@EnableWebSecurity
 @EnableGlobalMethodSecurity(prePostEnabled = true)
 public class SecurityConfigurations extends WebSecurityConfigurerAdapter {
 
@@ -47,14 +47,16 @@ public class SecurityConfigurations extends WebSecurityConfigurerAdapter {
 	protected void configure(HttpSecurity http) throws Exception {
 		http.cors();
 		http.authorizeRequests().antMatchers("/resources/**").permitAll()
-				.antMatchers(HttpMethod.GET, "/acesso/*").permitAll().antMatchers(HttpMethod.POST, "/auth").permitAll()
-				.anyRequest().authenticated().and().csrf().disable().sessionManagement()
-				.sessionCreationPolicy(SessionCreationPolicy.STATELESS).and()
-				.addFilterBefore(new AuthenticationFilter(tokenService, usuarioRepository),
+				.antMatchers(HttpMethod.GET, "/acesso/*").permitAll()
+				.antMatchers(HttpMethod.GET, "/swagger-ui/**").permitAll()
+				.antMatchers(HttpMethod.GET, "/v3/**").permitAll()
+				.antMatchers(HttpMethod.GET, "/actuator/**").permitAll() // Exibe informações sensíveis, desabilitar para produção
+				.antMatchers(HttpMethod.POST, "/auth").permitAll() // Libera acesso sem autenticação para POST no endPoint /auth
+				.anyRequest().authenticated() // Faz com que qualquer outra request necessite de autenticação
+				.and().csrf().disable()// Desabilita csrf pois será utilizado jwt, protegendo a aplicação
+				.sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS) // Garante que não seja criada sessões
+				.and().addFilterBefore(new AuthenticationFilter(tokenService, usuarioRepository), // Chama o filtro criado (AuthenticationFilter)
 						UsernamePasswordAuthenticationFilter.class);
-
-		http.sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS); // Assegura que não será criado
-																							// sessões
 
 	}
 

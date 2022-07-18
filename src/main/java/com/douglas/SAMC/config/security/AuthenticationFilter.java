@@ -24,7 +24,7 @@ public class AuthenticationFilter extends OncePerRequestFilter {
 	// essa injeção é efetuada através do construtor
 	public AuthenticationFilter(TokenService tokenService, UsuarioRepository usuarioRepository) {
 		this.tokenService = tokenService;
-		this.usuarioRepository = usuarioRepository;
+		this.usuarioRepository = usuarioRepository;	
 	}
 
 	@Override

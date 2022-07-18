@@ -8,9 +8,10 @@ import java.util.Base64;
 import java.util.List;
 import java.util.Optional;
 
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -89,8 +90,9 @@ public class FuncionarioService {
 
 	}
 
-	public List<FuncionarioDTO> FindAll() {
-		List<Funcionario> funcionarios = (List<Funcionario>) repository.findAll();
+	public List<FuncionarioDTO> FindAll(Pageable paginacao) {
+		
+		Page<Funcionario> funcionarios = (Page<Funcionario>) repository.findAll(paginacao);
 		List<FuncionarioDTO> funcionariosDTO = new ArrayList<>();
 		funcionarios.forEach(funcionario -> {
 			FuncionarioDTO funcionarioDTO = new FuncionarioDTO(funcionario);
@@ -177,7 +179,6 @@ public class FuncionarioService {
 		return;
 	}
 
-	@SuppressWarnings("resource")
 	private String getImage(Funcionario funcionario) {
 		String imageName = funcionario.getMatricula().toString() + ".JPG";
 		try {
@@ -188,6 +189,7 @@ public class FuncionarioService {
 				byte imageData[] = new byte[(int) file.length()];
 				fileInputStream.read(imageData);
 				String imageBase64 = "data:image/jpeg;base64," + Base64.getEncoder().encodeToString(imageData);
+				fileInputStream.close();
 				return imageBase64;
 			} catch (IOException e) {
 				return null;
