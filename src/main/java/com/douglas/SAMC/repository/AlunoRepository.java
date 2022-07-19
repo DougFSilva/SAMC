@@ -2,6 +2,7 @@ package com.douglas.SAMC.repository;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -24,11 +25,11 @@ public interface AlunoRepository extends JpaRepository<Aluno, Integer> {
 
 	List<Aluno> findAllByTurmaOrderByNome(Turma turma, Pageable paginacao);
 
-	List<Aluno> findAllByEntradaSaidaOrderByNome(EntradaSaida entradaSaida);
+	Set<Aluno> findAllByEntradaSaidaOrderByNome(EntradaSaida entradaSaida);
 
 	List<Aluno> findAllByTurmaCodigoOrderByNome(String codigo);
 
-	List<Aluno> findAllByDesbloqueioTemporarioOrderByNome(boolean resolvido);
+	Set<Aluno> findAllByDesbloqueioTemporarioOrderByNome(boolean resolvido);
 
 	List<Aluno> findAllByStatusOrderByNome(AlunoStatus alunoStatus, Pageable paginacao);
 

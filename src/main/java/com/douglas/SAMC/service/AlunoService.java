@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import javax.validation.Valid;
 
@@ -317,12 +318,12 @@ public class AlunoService {
 		return toDTOLAzy(alunos);
 	}
 
-	public List<Aluno> findAllByDesbloqueioTemporario(boolean resolvido) {
-		return (List<Aluno>) repository.findAllByDesbloqueioTemporarioOrderByNome(resolvido);
+	public Set<Aluno> findAllByDesbloqueioTemporario(boolean resolvido) {
+		return (Set<Aluno>) repository.findAllByDesbloqueioTemporarioOrderByNome(resolvido);
 	}
 
-	public List<Aluno> findAllByEntradaSaida(EntradaSaida entradaSaida) {
-		return (List<Aluno>) repository.findAllByEntradaSaidaOrderByNome(entradaSaida);
+	public Set<Aluno> findAllByEntradaSaida(EntradaSaida entradaSaida) {
+		return (Set<Aluno>) repository.findAllByEntradaSaidaOrderByNome(entradaSaida);
 	}
 
 	public List<AlunoDTO> findByCurso(Integer curso_id, Pageable paginacao) {

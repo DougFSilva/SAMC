@@ -3,6 +3,7 @@ package com.douglas.SAMC.model;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -48,9 +49,9 @@ public class TarefasCron {
 
 	private boolean contain;
 
-	@Scheduled(cron = "0 59 23 * * *")
+	@Scheduled(cron = "0 34 09 * * *")
 	public void uptadeBloqueio() {
-		List<Aluno> alunos = alunoService.findAllByDesbloqueioTemporario(true);
+		HashSet<Aluno> alunos = (HashSet<Aluno>) alunoService.findAllByDesbloqueioTemporario(true);
 		alunos.forEach(aluno -> {
 			aluno.setDesbloqueioTemporario(false);
 			alunoRepository.save(aluno);
@@ -58,11 +59,11 @@ public class TarefasCron {
 		});
 	}
 
-	@Scheduled(cron = "15 59 23 * * *")
+	@Scheduled(cron = "15 36 09 * * *")
 	public void updateEntradaSaida() {
-		List<Aluno> alunos = alunoService.findAllByEntradaSaida(EntradaSaida.SAIDA);
-		alunos.addAll((List<Aluno>) alunoService.findAllByEntradaSaida(EntradaSaida.ALMOCO_ENTRADA));
-		alunos.addAll((List<Aluno>) alunoService.findAllByEntradaSaida(EntradaSaida.ALMOCO_SAIDA));
+		HashSet<Aluno> alunos = (HashSet<Aluno>) alunoService.findAllByEntradaSaida(EntradaSaida.SAIDA);
+		alunos.addAll((HashSet<Aluno>) alunoService.findAllByEntradaSaida(EntradaSaida.ALMOCO_ENTRADA));
+		alunos.addAll((HashSet<Aluno>) alunoService.findAllByEntradaSaida(EntradaSaida.ALMOCO_SAIDA));
 		alunos.forEach(aluno -> {
 			aluno.setEntradaSaida(EntradaSaida.ENTRADA);
 			alunoRepository.save(aluno);
